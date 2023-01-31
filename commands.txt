@@ -1,0 +1,9 @@
+1. To check the status
+git status
+
+2. to check the commit messages and date of commit
+git log  OR git log --oneline
+
+git add <filename> or git add .
+git commit -m "<your commit message>" for example git commit -m "Backup"
+git push or git push origin master/main

@@ -4,22 +4,54 @@ import finplot as fplt
 import numpy as np
 import datetime 
 from IPython.display import display
-import matplotlib as mpl
+import matplotlib.pyplot as plt
+import mplfinance as mpf
+import talib
 
 ## Trading Data
-data = yf.download("TSLA", period = "12mo", interval = "1d")
+data = yf.download("TSLA", period = "50d", interval = "5m")
 data = pd.DataFrame(data)
 
-## separateing date and time if datetime is in column not in index
+## separating date and time if datetime is in column not in index
 data["Datetime"] = data.index
 data['Date'] = data['Datetime'].dt.date
 data['Time'] = data['Datetime'].dt.time
 data = data.reset_index(drop=True)
 
+## Top Panel and Bottom Panel
+ax, ax1,ax2 = fplt.create_plot(rows=3)
+ax.set_visible(xgrid=False, ygrid=False)
+
+# place some dumb markers on low wicks
+lo_wicks = data[['Open','Close']].T.min() - data['Low']
+data.loc[(lo_wicks>lo_wicks.quantile(0.99)), 'marker'] = data['Low']
+fplt.plot(data['Datetime'], data['marker'], ax=ax, color='#4a5', style='^', legend='dumb mark')
+
+# draw some random crap on our second plot
+fplt.plot(data['Datetime'], np.random.normal(size=len(data)), ax=ax2, color='#927', legend='stuff')
+fplt.set_y_range(-1.4, +3.7, ax=ax2) # hard-code y-axis range limitation
+
+# restore view (X-position and zoom) if we ever run this example again
+fplt.autoviewrestore()
+
+# overlay volume on the top plot
+volumes = data[['Datetime','Open','Close','Volume']]
+fplt.volume_ocv(volumes, ax=ax.overlay())
+
+## RSI
+data["RSI"] = talib.RSI(data["Close"],14)
+fplt.plot(data["RSI"], color='#927', legend="RSI", ax = ax1)
+
+
+
 
 ## Bollinger Band formula
 def get_sma(prices, rate):
     return prices.rolling(rate).mean()
+
+
+# restore view (X-position and zoom) when we run this example again
+fplt.autoviewrestore()
 
 def get_bollinger_bands(prices, rate=20):
     sma = get_sma(prices, rate)
@@ -28,7 +60,7 @@ def get_bollinger_bands(prices, rate=20):
     bollinger_down = sma - std * 2 # Calculate bottom band
     return bollinger_up, bollinger_down, sma
 
-## separateing date and time if datetime is index
+## separating date and time if datetime is index
 # data.index = pd.MultiIndex.from_arrays([data.index.date,
 #     data.index.time], names=['Date','Time'])
 
@@ -41,6 +73,12 @@ data["SMA"] = sma
 
 
 
+## Plot the chart
+fplt.plot(data["Datetime"],data["SMA"])
+fplt.plot(data["Datetime"], data["bollinger_up"])
+fplt.plot(data["Datetime"],data["bollinger_down"])
+
+
 
 ## Swing High and Swing Lows
 # data["Swing"] = data.groupby(['High', 'bollinger_up']).apply(data.High >= data.bollinger_up)
@@ -50,25 +88,6 @@ data["Swing_High"] = pd.DataFrame(data["Swing_High"])
 data['Swing_Low'] = np.where((data["Low"] <= data["bollinger_down"]),
      data["Low"], np.nan)
 data["Swing_Low"] = pd.DataFrame(data["Swing_Low"])
-
-
-
-## Plot the chart
-fplt.plot(data["Datetime"],data["SMA"])
-fplt.plot(data["Datetime"], data["bollinger_up"])
-fplt.plot(data["Datetime"],data["bollinger_down"])
-
-## Plotting Swing Highs
-# for i in range(len(data)):
-#     print(data.loc[i, "Datetime"], data.loc[i, "Swing_High"])
-    # fplt.add_text((data.loc[i, "Datetime"], data.loc[i, "Swing_High"]), "H", color = "#bb7700")
-
-## Swing Lows
-# for i in range(len(data)):
-    # print(data.loc[i, "Datetime"], data.loc[i, "Swing_Low"])
-    # fplt.add_text((data.loc[i, "Datetime"], data.loc[i, "Swing_Low"]), "H", color = "#bb7700")
-
-
 
 
 
@@ -86,67 +105,93 @@ data['Modified_Swing_Low'] = np.where((data["Modified2"] == True),
      data["Swing_Low"], np.nan)
 data["Modified_Swing_Low"] = pd.DataFrame(data["Modified_Swing_Low"])
 
-
-
-
-res = data[data['Modified_Swing_Low'].notnull()]
-res.reset_index(inplace=True)
-res = res.rename(columns = {'index':'final'})
-
-##Convert Strings to Integers in Pandas DataFrame
-# res = res['final'].astype(int)
-# valid_MSH_value_list = []
-# valid_MSH_date_list = []
-# for obj in res:
-#     u = data["Modified_Swing_High"].loc[:res+1].last_valid_index()
-#     v = data["Modified_Swing_High"][u]
-#     x = data["Datetime"][u]
-#     valid_MSH_value_list.append(v)
-#     valid_MSH_date_list.append(x)
-
-# a = pd.DataFrame(list(zip(valid_MSH_value_list, valid_MSH_date_list)),columns=['lst1_title','lst2_title'])
-
-# print(a)
-
+## To print all DATAS at once
 # res.to_csv("any1")
 # pd.set_option('display.max_rows', res.shape[0]+1)
 # print(res)
 # print(res["Modified_Swing_Low"])
 
 
+## Fror exact Swing High
+Resp_Swing_High = np.argwhere(data["Modified_Swing_Low"].notnull().values).tolist()  ##For Swing High
+Valid_MSH_Value_List = []
+Valid_MSH_Date_List = []
+Valid_MSH_RSI_List = []
+Valid_Index_MSH = None
+Valid_MSH = None
+Valid_Date_MSH = None
+Valid_RSI_MSH = None
 
-resp = np.argwhere(data["Modified_Swing_Low"].notnull().values).tolist()
-valid_MSH_value_list = []
-valid_MSH_date_list = []
-valid_index = None
-valid_MSH = None
-valid_date = None
 
-for obj in resp:
+for obj in Resp_Swing_High:
     index = obj[0]
     try:
-        valid_index = data['Modified_Swing_High'][:index].last_valid_index()
-        valid_MSH = data["Modified_Swing_High"][valid_index]
-        valid_date = data["Datetime"][valid_index]
-        valid_MSH_value_list.append(valid_MSH)
-        valid_MSH_date_list.append(valid_date)
+        ## For Exact Swing High
+        Valid_Index_MSH = data['Modified_Swing_High'][:index].last_valid_index()
+        Valid_MSH = data["Modified_Swing_High"][Valid_Index_MSH]
+        Valid_Date_MSH = data["Datetime"][Valid_Index_MSH]
+        Valid_RSI_MSH = data["RSI"][Valid_Index_MSH]
+        Valid_MSH_Value_List.append(Valid_MSH)
+        Valid_MSH_Date_List.append(Valid_Date_MSH)
+        Valid_MSH_RSI_List.append(Valid_RSI_MSH)
+
     except:
         pass
 
+## For Exact Swing High
 MSH_data = {
-    "Valid_MSH": valid_MSH_value_list,
-    "Datetime": valid_MSH_date_list
+    "Valid_MSH": Valid_MSH_Value_List,
+    "Datetime": Valid_MSH_Date_List,
+    "RSI" : Valid_MSH_RSI_List
 }
 MSH_df = pd.DataFrame(MSH_data)
-print(MSH_df)
+
+
+# # Plotting EXACT Swing Highs 
+for i in range(len(MSH_df)):
+    # print(data.loc[i, "Datetime"], data.loc[i, "Swing_High"])
+    fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), "Hi", color = "#bb7700")
+    # fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "RSI"]), MSH_df["RSI"], color = "#bb7700")
+    fplt.plot(MSH_df['Datetime'], MSH_df['RSI'], ax=ax, color='#4a5', style='^', legend='dumb mark')
 
 
 
-# # Plotting Swing Highs
-# for i in range(len(MSH_df)):
-#     # print(data.loc[i, "Datetime"], data.loc[i, "Swing_High"])
-#     fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), "Hah", color = "#bb7700")
-# # print(First_Swing_Low)
+## Fror exact Swing Low
+Resp_Swing_Low = np.argwhere(data["Modified_Swing_High"].notnull().values).tolist()  ##For Swing Low
+valid_MSL_value_list = []
+valid_MSL_date_list = []
+valid_index_MSL = None
+valid_MSL = None
+valid_date = None
+
+for obj in Resp_Swing_Low:
+    index = obj[0]
+    try:
+        ## For Exact Swing Low
+        valid_index_MSL = data['Modified_Swing_Low'][:index].last_valid_index()
+        valid_MSL = data["Modified_Swing_Low"][valid_index_MSL]
+        valid_date_MSL = data["Datetime"][valid_index_MSL]
+        valid_MSL_value_list.append(valid_MSL)
+        valid_MSL_date_list.append(valid_date_MSL)   
+
+    except:
+        pass
+
+## For Exact Swing Low
+MSL_data = {
+    "Valid_MSL": valid_MSL_value_list,
+    "Datetime": valid_MSL_date_list,
+}
+MSL_df = pd.DataFrame(MSL_data)
+print(MSL_df)
+
+
+
+
+# # Plotting EXACT Swing Lows
+for i in range(len(MSL_df)):
+    fplt.add_text((MSL_df.loc[i, "Datetime"], MSL_df.loc[i, "Valid_MSL"]), "Lo", color = "#bb7700")
+
 
 
 ## Plotting candlestick and showing all the Plots

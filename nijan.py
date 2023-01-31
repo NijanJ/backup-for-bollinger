@@ -19,13 +19,13 @@ tv = TvDatafeed()
 #Download data from stock market
 stock_data = yf.download("AAPL", start="2023-01-01", end="2023-01-17",interval= "15m")
 
-# data = tv.get_hist(
-#     symbol='NIFTY',exchange='NSE',interval=Interval.in_15_minute,n_bars=5000, fut_contract = 1
-# )
+data = tv.get_hist(
+    symbol='NIFTY',exchange='NSE',interval=Interval.in_15_minute,n_bars=5000, fut_contract = 1
+)
 
 
 # data.to_dict()
-# print(data)
+print(data)
 
 # # Select data for a specific time period
 # start_date = "2023-01-09"
@@ -38,10 +38,10 @@ stock_data = yf.download("AAPL", start="2023-01-01", end="2023-01-17",interval= 
 
 # high_low_data = pd.DataFrame({'high': data.iloc[:1]['high'], 'low': data.iloc[:1]['low']})
 # print(data)
-high_low_data = pd.DataFrame({'High': stock_data.iloc[:1].Open, 'Low': stock_data.iloc[:1].Open})
+# high_low_data = pd.DataFrame({'High': stock_data.iloc[:1].Open, 'Low': stock_data.iloc[:1].Open})
 
-# Plot the candle chart
-mpf.plot(stock_data, type='candle', addplot=high_low_data)
+# # Plot the candle chart
+# mpf.plot(stock_data, type='candle', addplot=high_low_data)
 
 
 # Plot the candle chart
