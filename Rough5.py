@@ -9,4 +9,6 @@ technologies = ({
 df = pd.DataFrame(technologies)
 
 value = df["Discount"][0:3].count()
-print(value)
+c = [1, 4, 3, 2,np.nan, 7, np.nan, 8, np.nan,6]
+c = sorted(list(set(c)))
+print(c)

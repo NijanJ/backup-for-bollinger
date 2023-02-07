@@ -38,18 +38,13 @@ data['Date'] = data['Datetime'].dt.date
 data['Time'] = data['Datetime'].dt.time
 data = data.reset_index(drop=True)
 
+## separating date and time if datetime is index
+# data.index = pd.MultiIndex.from_arrays([data.index.date,
+#     data.index.time], names=['Date','Time'])
+
 ## Top Panel and Bottom Panel
 ax, ax1= fplt.create_plot(rows=2)
 ax.set_visible(xgrid=False, ygrid=False)
-
-# place some dumb markers on low wicks
-lo_wicks = data[['Open','Close']].T.min() - data['Low']
-data.loc[(lo_wicks>lo_wicks.quantile(0.99)), 'marker'] = data['Low']
-fplt.plot(data['Datetime'], data['marker'], ax=ax, color='#4a5', style='^', legend='dumb mark')
-
-# draw some random crap on our second plot
-# fplt.plot(data['Datetime'], np.random.normal(size=len(data)), ax=ax2, color='#927', legend='stuff')
-# fplt.set_y_range(-1.4, +3.7, ax=ax2) # hard-code y-axis range limitation
 
 # restore view (X-position and zoom) if we ever run this example again
 fplt.autoviewrestore()
@@ -62,16 +57,9 @@ fplt.volume_ocv(volumes, ax=ax.overlay())
 data["RSI"] = talib.RSI(data["Close"],14)
 fplt.plot(data["RSI"], color='#927', legend="RSI", ax = ax1)
 
-
-
-
 ## Bollinger Band formula
 def get_sma(prices, rate):
     return prices.rolling(rate).mean()
-
-
-# restore view (X-position and zoom) when we run this example again
-fplt.autoviewrestore()
 
 def get_bollinger_bands(prices, rate=20):
     sma = get_sma(prices, rate)
@@ -79,10 +67,6 @@ def get_bollinger_bands(prices, rate=20):
     bollinger_up = sma + std * 2 # Calculate top band
     bollinger_down = sma - std * 2 # Calculate bottom band
     return bollinger_up, bollinger_down, sma
-
-## separating date and time if datetime is index
-# data.index = pd.MultiIndex.from_arrays([data.index.date,
-#     data.index.time], names=['Date','Time'])
 
 
 ## Calculating Bollinger Band
@@ -92,7 +76,6 @@ data["bollinger_down"] = bollinger_down
 data["SMA"] = sma
 
 
-
 ## Plot the chart
 fplt.plot(data["Datetime"],data["SMA"])
 fplt.plot(data["Datetime"], data["bollinger_up"])
@@ -100,43 +83,38 @@ fplt.plot(data["Datetime"],data["bollinger_down"])
 
 
 
-## Swing High and Swing Lows
-# data["Swing"] = data.groupby(['High', 'bollinger_up']).apply(data.High >= data.bollinger_up)
-data['Swing_High'] = np.where((data["High"] >= data["bollinger_up"]),
+## Finding Highs touching upper Bollinger Band
+data['BB_High'] = np.where((data["High"] >= data["bollinger_up"]),
      data["High"], np.nan)
-data["Swing_High"] = pd.DataFrame(data["Swing_High"])
+data["BB_High"] = pd.DataFrame(data["BB_High"])
+
+## Finding lows touching Lower Bollinger Band
 data['Swing_Low'] = np.where((data["Low"] <= data["bollinger_down"]),
      data["Low"], np.nan)
 data["Swing_Low"] = pd.DataFrame(data["Swing_Low"])
 
-# print("Swing Low")
-# print(data["Swing_Low"])
-# fplt.plot(data["Datetime"], data["Swing_Low"],width=3)
-# fplt.show()
-##Swing High
-data["Modified1"] = np.append(np.isnan(data["Swing_High"].values)[1:], False)
-pd.Series(data["Swing_High"].values[data["Modified1"]], data["Swing_High"].index[data["Modified1"]])
+
+##find the first Non-NAN data before Nan in one column in Pandas
+data["Modified1"] = np.append(np.isnan(data["BB_High"].values)[1:], False)
+pd.Series(data["BB_High"].values[data["Modified1"]], data["BB_High"].index[data["Modified1"]])
 data['Modified_Swing_High'] = np.where((data["Modified1"] == True),
-     data["Swing_High"], np.nan)
+     data["BB_High"], np.nan)
 data["Modified_Swing_High"] = pd.DataFrame(data["Modified_Swing_High"])
 
-##Swing Low
+
+##find the first Non-NAN data before Nan in one column in Pandas
 data["Modified2"] = np.append(np.isnan(data["Swing_Low"].values)[1:], False)
 pd.Series(data["Swing_Low"].values[data["Modified2"]], data["Swing_Low"].index[data["Modified2"]])
 data['Modified_Swing_Low'] = np.where((data["Modified2"] == True),
      data["Swing_Low"], np.nan)
 data["Modified_Swing_Low"] = pd.DataFrame(data["Modified_Swing_Low"])
 
-## To print all DATAS at once
-# res.to_csv("any1")
-# pd.set_option('display.max_rows', res.shape[0]+1)
-# print(res)
-# print(res["Modified_Swing_Low"])
 
 
-## Fror exact Swing High
-Resp_Swing_High = np.argwhere(data["Modified_Swing_Low"].notnull().values).tolist()  ##For Swing High
-d = []
+
+## Finding the last Swing high among number of Swing Highs just before the Swing Low
+Resp_Swing_High = np.argwhere(data["Modified_Swing_Low"].notnull().values).tolist()  ##Removing all Nan values from Modified Swing Low
+d = []  ## List of last Swing High among number of Swing Highs just before the Swing Low
 Valid_MSH_Value_List = []
 Valid_MSH_Date_List = []
 Valid_MSH_RSI_List = []
@@ -150,7 +128,7 @@ for obj in Resp_Swing_High:
     index = obj[0]
     try:
         ## For Exact Swing High
-        Valid_Index_MSH = data['Modified_Swing_High'][:index].last_valid_index()
+        Valid_Index_MSH = data['Modified_Swing_High'][:index].last_valid_index() ##Finding the last Swing high among number of Swing Highs just before the Swing Low
         Valid_MSH = data["Modified_Swing_High"][Valid_Index_MSH]
         Valid_Date_MSH = data["Datetime"][Valid_Index_MSH]
         Valid_RSI_MSH = data["RSI"][Valid_Index_MSH]
@@ -162,7 +140,7 @@ for obj in Resp_Swing_High:
     except:
         pass
 
-## For Exact Swing High
+## putting data related with last Swing High among number of Swing Highs just before the Swing Swing Low in PANDAS dataframe
 MSH_data = {
     "Valid_MSH": Valid_MSH_Value_List,
     "Datetime": Valid_MSH_Date_List,
@@ -182,20 +160,13 @@ for i in range(len( Valid_MSH_RSI_List)):
 # a = [str(x) for x in b] 
 # print(a)
 
-# # Plotting EXACT Swing Highs 
-for i in range(len(MSH_df)):
-    # print(data.loc[i, "Datetime"], data.loc[i, "Swing_High"])
-    fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), "Hi", color = "#bb7700")
-    # fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), b[i] , color = "#bb7700")
-    
-# print(data)
 
 
-## Fror exact Swing Low
-Resp_Swing_Low = np.argwhere(data["Modified_Swing_High"].notnull().values).tolist()  ##For Swing Low
+#### Finding the last Swing Low among number of Swing Lows just before the Swing High
+Resp_Swing_Low = np.argwhere(data["Modified_Swing_High"].notnull().values).tolist()  ##For non-Nan Modified Swing High
 valid_MSL_value_list = []
 valid_MSL_date_list = []
-c = []
+c = []  ##List of the last Swing Low among number of Swing Highs just before the Swing High
 valid_index_MSL = None
 valid_MSL = None
 valid_date = None
@@ -204,7 +175,7 @@ for obj in Resp_Swing_Low:
     index = obj[0]
     try:
         ## For Exact Swing Low
-        valid_index_MSL = data['Modified_Swing_Low'][:index].last_valid_index()
+        valid_index_MSL = data['Modified_Swing_Low'][:index].last_valid_index()  ##Finding the last Swing Low among number of Swing Lows just before the Swing High
         valid_MSL = data["Modified_Swing_Low"][valid_index_MSL]
         valid_date_MSL = data["Datetime"][valid_index_MSL]
         valid_MSL_value_list.append(valid_MSL)
@@ -213,46 +184,70 @@ for obj in Resp_Swing_Low:
 
     except:
         pass
-
-## For Exact Swing Low
+## putting data related with last Swing Low among number of Swing Lows just before the Swing High in PANDAS dataframe
 MSL_data = {
     "Valid_MSL": valid_MSL_value_list,
     "Datetime": valid_MSL_date_list,
 }
 MSL_df = pd.DataFrame(MSL_data)
-# print(MSL_df)
 
-min_value_1 = []
-min123 =[]
 
-d = sorted(list(set(d)))
-c = sorted(list(set(c)))
+
+### EXACT SWING LOW
+min_value_SL = [] ##List to put the value of minimum LOW between last Swing High and Last Swing Low
+min123_SL =[] ##List to put the DATE of value of minimum LOW between last Swing High and Last Swing Low
+
+d = sorted(list(set(d))) ## Sorting the values and removing NAN using SORTED function from List of Last swing high before first swing low
+c = sorted(list(set(c))) ## Sorting the values and removing NAN using SORTED function from List of Last swing Low before first swing High
 
 
 ### Exact Swing Low
 for i, element in enumerate(d):
     if d[0] > c[0]:
-        list3 = [item for sublist in zip(c, d) for item in sublist]
         min_index = None
-        if data["Low"][list3[i]:list3[i+1]].count() > 2:
-            min_index = data["Low"][list3[i]:list3[i+1]].idxmin()
+        if data["Low"][c[i]:d[i]].count() > 2:
+            min_index = data["Low"][c[i]:d[i]].idxmin() ## FInding Index of minimum LOW between last Swing High and Last Swing Low
             min_value = data["Low"][min_index]
             date1L = data["Datetime"][min_index]
-            min123.append(date1L)
-            min_value_1.append(min_value)
+            min123_SL.append(date1L)
+            min_value_SL.append(min_value)
 
-       
-t = {
-    "t1": min_value_1,
-    "t2": min123,
+## putting data related with Exact Swing Low in PANDAS dataframe      
+t_SL = {
+    "t1": min_value_SL,
+    "t2": min123_SL,
 }
-t_df = pd.DataFrame(t)
+t_SL = pd.DataFrame(t_SL)
 
-print(t_df)
+## Plotting Exact Swing Low
+for i in range(len(t_SL)):
+    fplt.add_text((t_SL.loc[i, "t2"], t_SL.loc[i, "t1"]), "Lo", color = "#bb7700")
 
-for i in range(len(t_df)):
-    fplt.add_text((t_df.loc[i, "t2"], t_df.loc[i, "t1"]), "Lo", color = "#bb7700")
-    # fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), "Hi", color = "#bb7700")
+
+### Exact Swing High
+min_value_SH = [] ##List to put the value of maximum HIGH between last Swing High and Last Swing Low
+min123_SH =[] ##List to put the DATE of value of maximum HIGH between last Swing High and Last Swing Low
+
+for i, element in enumerate(d):
+    if d[0] > c[0]:
+        min_index = None
+        if data["High"][c[i]:d[i]].count() > 2:
+            min_index = data["High"][c[i]:d[i]].idxmax() ## FInding Index of maximum HIGH between last Swing High and Last Swing Low
+            min_value = data["High"][min_index]
+            date1L = data["Datetime"][min_index]
+            min123_SH.append(date1L)
+            min_value_SH.append(min_value)
+
+## putting data related with Exact Swing Low in PANDAS dataframe      
+t_SH = {
+    "tSH1": min_value_SH,
+    "tSH2": min123_SH,
+}
+t_SH = pd.DataFrame(t_SH)
+
+## Plotting Exact Swing Low
+for i in range(len(t_SH)):
+    fplt.add_text((t_SH.loc[i, "tSH2"], t_SH.loc[i, "tSH1"]), "Hi", color = "#bb7700")
 
     
 
@@ -265,15 +260,21 @@ def get_name(Symbol):
 
 
 
+## To print all DATAS at once
+# res.to_csv("any1")
+# pd.set_option('display.max_rows', res.shape[0]+1)
+# print(res)
+# print(res["Modified_Swing_Low"])
 
-fplt.show(qt_exec = False) # prepares plots when they're all setup
+
+# fplt.show(qt_exec = False) # prepares plots when they're all setup
 win.show()
 app.exec()
 fplt.show()
 
-data.to_csv("any1")
-pd.set_option('display.max_rows', data.shape[0]+1)
-print(data)
+# t_df.to_csv("any1")
+# pd.set_option('display.max_rows', data.shape[0]+1)
+# print(t_df)
 
 
 
