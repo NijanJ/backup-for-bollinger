@@ -3,10 +3,30 @@ import yfinance as yf
 import finplot as fplt
 import numpy as np
 import datetime 
-from IPython.display import display
-import matplotlib.pyplot as plt
-import mplfinance as mpf
 import talib
+from PyQt6.QtWidgets import QApplication, QGridLayout, QMainWindow, QGraphicsView, QComboBox, QLabel
+from pyqtgraph.dockarea import DockArea, Dock
+from threading import Thread
+import math
+
+app = QApplication([])
+win = QMainWindow()
+area = DockArea()
+win.setCentralWidget(area)
+win.resize(1600,800)
+win.setWindowTitle("Docking charts example for finplot")
+
+# Set width/height of QSplitter
+win.setStyleSheet("QSplitter { width : 20px; height : 20px; }")
+
+# Create docks
+dock_0 = Dock("dock_0", size = (1000, 100), closable = True)
+dock_1 = Dock("dock_1", size = (1000, 100), closable = True)
+dock_2 = Dock("dock_2", size = (1000, 100), closable = True)
+area.addDock(dock_0)
+area.addDock(dock_1)
+area.addDock(dock_2)
+
 
 ## Trading Data
 data = yf.download("TSLA", period = "50d", interval = "5m")
@@ -19,7 +39,7 @@ data['Time'] = data['Datetime'].dt.time
 data = data.reset_index(drop=True)
 
 ## Top Panel and Bottom Panel
-ax, ax1,ax2 = fplt.create_plot(rows=3)
+ax, ax1= fplt.create_plot(rows=2)
 ax.set_visible(xgrid=False, ygrid=False)
 
 # place some dumb markers on low wicks
@@ -28,8 +48,8 @@ data.loc[(lo_wicks>lo_wicks.quantile(0.99)), 'marker'] = data['Low']
 fplt.plot(data['Datetime'], data['marker'], ax=ax, color='#4a5', style='^', legend='dumb mark')
 
 # draw some random crap on our second plot
-fplt.plot(data['Datetime'], np.random.normal(size=len(data)), ax=ax2, color='#927', legend='stuff')
-fplt.set_y_range(-1.4, +3.7, ax=ax2) # hard-code y-axis range limitation
+# fplt.plot(data['Datetime'], np.random.normal(size=len(data)), ax=ax2, color='#927', legend='stuff')
+# fplt.set_y_range(-1.4, +3.7, ax=ax2) # hard-code y-axis range limitation
 
 # restore view (X-position and zoom) if we ever run this example again
 fplt.autoviewrestore()
@@ -89,8 +109,10 @@ data['Swing_Low'] = np.where((data["Low"] <= data["bollinger_down"]),
      data["Low"], np.nan)
 data["Swing_Low"] = pd.DataFrame(data["Swing_Low"])
 
-
-
+# print("Swing Low")
+# print(data["Swing_Low"])
+# fplt.plot(data["Datetime"], data["Swing_Low"],width=3)
+# fplt.show()
 ##Swing High
 data["Modified1"] = np.append(np.isnan(data["Swing_High"].values)[1:], False)
 pd.Series(data["Swing_High"].values[data["Modified1"]], data["Swing_High"].index[data["Modified1"]])
@@ -114,6 +136,7 @@ data["Modified_Swing_Low"] = pd.DataFrame(data["Modified_Swing_Low"])
 
 ## Fror exact Swing High
 Resp_Swing_High = np.argwhere(data["Modified_Swing_Low"].notnull().values).tolist()  ##For Swing High
+d = []
 Valid_MSH_Value_List = []
 Valid_MSH_Date_List = []
 Valid_MSH_RSI_List = []
@@ -134,6 +157,7 @@ for obj in Resp_Swing_High:
         Valid_MSH_Value_List.append(Valid_MSH)
         Valid_MSH_Date_List.append(Valid_Date_MSH)
         Valid_MSH_RSI_List.append(Valid_RSI_MSH)
+        d.append(Valid_Index_MSH)
 
     except:
         pass
@@ -146,20 +170,32 @@ MSH_data = {
 }
 MSH_df = pd.DataFrame(MSH_data)
 
+b= []
+## Converting RSI LIST Data into 4 digit decimal number
+for i in range(len( Valid_MSH_RSI_List)):
+    c =f'{Valid_MSH_RSI_List[i]:.3f}'[:-1]
+    b.append(c)
+
+
+
+## converting RSI to string for plotting purpose
+# a = [str(x) for x in b] 
+# print(a)
 
 # # Plotting EXACT Swing Highs 
 for i in range(len(MSH_df)):
     # print(data.loc[i, "Datetime"], data.loc[i, "Swing_High"])
     fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), "Hi", color = "#bb7700")
-    # fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "RSI"]), MSH_df["RSI"], color = "#bb7700")
-    fplt.plot(MSH_df['Datetime'], MSH_df['RSI'], ax=ax, color='#4a5', style='^', legend='dumb mark')
-
+    # fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), b[i] , color = "#bb7700")
+    
+# print(data)
 
 
 ## Fror exact Swing Low
 Resp_Swing_Low = np.argwhere(data["Modified_Swing_High"].notnull().values).tolist()  ##For Swing Low
 valid_MSL_value_list = []
 valid_MSL_date_list = []
+c = []
 valid_index_MSL = None
 valid_MSL = None
 valid_date = None
@@ -173,6 +209,7 @@ for obj in Resp_Swing_Low:
         valid_date_MSL = data["Datetime"][valid_index_MSL]
         valid_MSL_value_list.append(valid_MSL)
         valid_MSL_date_list.append(valid_date_MSL)   
+        c.append(valid_index_MSL)
 
     except:
         pass
@@ -183,21 +220,60 @@ MSL_data = {
     "Datetime": valid_MSL_date_list,
 }
 MSL_df = pd.DataFrame(MSL_data)
-print(MSL_df)
+# print(MSL_df)
+
+min_value_1 = []
+min123 =[]
+
+d = sorted(list(set(d)))
+c = sorted(list(set(c)))
 
 
+### Exact Swing Low
+for i, element in enumerate(d):
+    if d[0] > c[0]:
+        list3 = [item for sublist in zip(c, d) for item in sublist]
+        min_index = None
+        if data["Low"][list3[i]:list3[i+1]].count() > 2:
+            min_index = data["Low"][list3[i]:list3[i+1]].idxmin()
+            min_value = data["Low"][min_index]
+            date1L = data["Datetime"][min_index]
+            min123.append(date1L)
+            min_value_1.append(min_value)
 
+       
+t = {
+    "t1": min_value_1,
+    "t2": min123,
+}
+t_df = pd.DataFrame(t)
 
-# # Plotting EXACT Swing Lows
-for i in range(len(MSL_df)):
-    fplt.add_text((MSL_df.loc[i, "Datetime"], MSL_df.loc[i, "Valid_MSL"]), "Lo", color = "#bb7700")
+print(t_df)
 
+for i in range(len(t_df)):
+    fplt.add_text((t_df.loc[i, "t2"], t_df.loc[i, "t1"]), "Lo", color = "#bb7700")
+    # fplt.add_text((MSH_df.loc[i, "Datetime"], MSH_df.loc[i, "Valid_MSH"]), "Hi", color = "#bb7700")
+
+    
 
 
 ## Plotting candlestick and showing all the Plots
 fplt.candlestick_ochl(data[["Datetime","Open", "Close", "High", "Low"]])
+
+def get_name(Symbol):
+    return yf.Ticker(Symbol).info.get("shortName") or Symbol
+
+
+
+
+fplt.show(qt_exec = False) # prepares plots when they're all setup
+win.show()
+app.exec()
 fplt.show()
 
+data.to_csv("any1")
+pd.set_option('display.max_rows', data.shape[0]+1)
+print(data)
 
 
 
@@ -223,6 +299,3 @@ fplt.show()
 
 
 # "My psuh in this"
-x = 5
-y= 5
-z=5
