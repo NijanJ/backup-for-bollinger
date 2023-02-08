@@ -54,8 +54,10 @@ volumes = data[['Datetime','Open','Close','Volume']]
 fplt.volume_ocv(volumes, ax=ax.overlay())
 
 ## RSI
-data["RSI"] = talib.RSI(data["Close"],14)
+data["RSI"] = talib.RSI(data["Close"],14).round(2)
 fplt.plot(data["RSI"], color='#927', legend="RSI", ax = ax1)
+
+
 
 ## Bollinger Band formula
 def get_sma(prices, rate):
@@ -117,11 +119,10 @@ Resp_Swing_High = np.argwhere(data["Modified_Swing_Low"].notnull().values).tolis
 d = []  ## List of last Swing High among number of Swing Highs just before the Swing Low
 Valid_MSH_Value_List = []
 Valid_MSH_Date_List = []
-Valid_MSH_RSI_List = []
 Valid_Index_MSH = None
 Valid_MSH = None
 Valid_Date_MSH = None
-Valid_RSI_MSH = None
+
 
 
 for obj in Resp_Swing_High:
@@ -131,10 +132,8 @@ for obj in Resp_Swing_High:
         Valid_Index_MSH = data['Modified_Swing_High'][:index].last_valid_index() ##Finding the last Swing high among number of Swing Highs just before the Swing Low
         Valid_MSH = data["Modified_Swing_High"][Valid_Index_MSH]
         Valid_Date_MSH = data["Datetime"][Valid_Index_MSH]
-        Valid_RSI_MSH = data["RSI"][Valid_Index_MSH]
         Valid_MSH_Value_List.append(Valid_MSH)
         Valid_MSH_Date_List.append(Valid_Date_MSH)
-        Valid_MSH_RSI_List.append(Valid_RSI_MSH)
         d.append(Valid_Index_MSH)
 
     except:
@@ -144,21 +143,10 @@ for obj in Resp_Swing_High:
 MSH_data = {
     "Valid_MSH": Valid_MSH_Value_List,
     "Datetime": Valid_MSH_Date_List,
-    "RSI" : Valid_MSH_RSI_List
 }
 MSH_df = pd.DataFrame(MSH_data)
 
-b= []
-## Converting RSI LIST Data into 4 digit decimal number
-for i in range(len( Valid_MSH_RSI_List)):
-    c =f'{Valid_MSH_RSI_List[i]:.3f}'[:-1]
-    b.append(c)
 
-
-
-## converting RSI to string for plotting purpose
-# a = [str(x) for x in b] 
-# print(a)
 
 
 
@@ -193,13 +181,17 @@ MSL_df = pd.DataFrame(MSL_data)
 
 
 
+
 ### EXACT SWING LOW
+min_value_SL_Index = []
 min_value_SL = [] ##List to put the value of minimum LOW between last Swing High and Last Swing Low
 min123_SL =[] ##List to put the DATE of value of minimum LOW between last Swing High and Last Swing Low
 
 d = sorted(list(set(d))) ## Sorting the values and removing NAN using SORTED function from List of Last swing high before first swing low
 c = sorted(list(set(c))) ## Sorting the values and removing NAN using SORTED function from List of Last swing Low before first swing High
 
+Valid_MSH_RSI_List = []
+Valid_RSI_MSH = None
 
 ### Exact Swing Low
 for i, element in enumerate(d):
@@ -209,6 +201,9 @@ for i, element in enumerate(d):
             min_index = data["Low"][c[i]:d[i]].idxmin() ## FInding Index of minimum LOW between last Swing High and Last Swing Low
             min_value = data["Low"][min_index]
             date1L = data["Datetime"][min_index]
+            min_value_SL_Index.append(min_index)
+            Valid_RSI_MSH = data["RSI"][min_index]
+            Valid_MSH_RSI_List.append(Valid_RSI_MSH)
             min123_SL.append(date1L)
             min_value_SL.append(min_value)
 
@@ -216,27 +211,32 @@ for i, element in enumerate(d):
 t_SL = {
     "t1": min_value_SL,
     "t2": min123_SL,
+    "t3" : min_value_SL_Index,
+    "RSI" : Valid_MSH_RSI_List,
 }
 t_SL = pd.DataFrame(t_SL)
 
 ## Plotting Exact Swing Low
 for i in range(len(t_SL)):
     fplt.add_text((t_SL.loc[i, "t2"], t_SL.loc[i, "t1"]), "Lo", color = "#bb7700")
+    # fplt.add_text((t_SL.loc[i, "RSI"], t_SL.loc[i, "t1"]), Valid_MSH_RSI_List[i], color = "#bb7700")
+# print(t)
 
-
+# print(t_SL['t3'])
 ### Exact Swing High
 min_value_SH = [] ##List to put the value of maximum HIGH between last Swing High and Last Swing Low
 min123_SH =[] ##List to put the DATE of value of maximum HIGH between last Swing High and Last Swing Low
-
-for i, element in enumerate(d):
-    if d[0] > c[0]:
-        min_index = None
-        if data["High"][c[i]:d[i]].count() > 2:
-            min_index = data["High"][c[i]:d[i]].idxmax() ## FInding Index of maximum HIGH between last Swing High and Last Swing Low
-            min_value = data["High"][min_index]
-            date1L = data["Datetime"][min_index]
-            min123_SH.append(date1L)
-            min_value_SH.append(min_value)
+# t_SL = t_SL(-1)
+# min_value_SL_Index = min_value_SL_Index.pop(0)
+for i in range(len(min_value_SL_Index)):
+    # if d[0] > c[0]:
+    min_index = None
+    if data["High"][min_value_SL_Index[i-1]:min_value_SL_Index[i]].count() > 2:
+        min_index = data["High"][min_value_SL_Index[i-1]:min_value_SL_Index[i]].idxmax() ## FInding Index of maximum HIGH between last Swing High and Last Swing Low
+        min_value = data["High"][min_index]
+        date1L = data["Datetime"][min_index]
+        min123_SH.append(date1L)
+        min_value_SH.append(min_value)
 
 ## putting data related with Exact Swing Low in PANDAS dataframe      
 t_SH = {
@@ -249,7 +249,7 @@ t_SH = pd.DataFrame(t_SH)
 for i in range(len(t_SH)):
     fplt.add_text((t_SH.loc[i, "tSH2"], t_SH.loc[i, "tSH1"]), "Hi", color = "#bb7700")
 
-    
+
 
 
 ## Plotting candlestick and showing all the Plots
