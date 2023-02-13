@@ -91,12 +91,11 @@ data['BB_High'] = np.where((data["High"] >= data["bollinger_up"]),
 data["BB_High"] = pd.DataFrame(data["BB_High"])
 
 ## Finding lows touching Lower Bollinger Band
-data['Swing_Low'] = np.where((data["Low"] <= data["bollinger_down"]),
+data['BB_Low'] = np.where((data["Low"] <= data["bollinger_down"]),
      data["Low"], np.nan)
-data["Swing_Low"] = pd.DataFrame(data["Swing_Low"])
+data["BB_Low"] = pd.DataFrame(data["BB_Low"])
 
-
-##find the first Non-NAN data before Nan in one column in Pandas
+##
 data["Modified1"] = np.append(np.isnan(data["BB_High"].values)[1:], False)
 pd.Series(data["BB_High"].values[data["Modified1"]], data["BB_High"].index[data["Modified1"]])
 data['Modified_Swing_High'] = np.where((data["Modified1"] == True),
@@ -105,10 +104,10 @@ data["Modified_Swing_High"] = pd.DataFrame(data["Modified_Swing_High"])
 
 
 ##find the first Non-NAN data before Nan in one column in Pandas
-data["Modified2"] = np.append(np.isnan(data["Swing_Low"].values)[1:], False)
-pd.Series(data["Swing_Low"].values[data["Modified2"]], data["Swing_Low"].index[data["Modified2"]])
+data["Modified2"] = np.append(np.isnan(data["BB_Low"].values)[1:], False)
+pd.Series(data["BB_Low"].values[data["Modified2"]], data["BB_Low"].index[data["Modified2"]])
 data['Modified_Swing_Low'] = np.where((data["Modified2"] == True),
-     data["Swing_Low"], np.nan)
+     data["BB_Low"], np.nan)
 data["Modified_Swing_Low"] = pd.DataFrame(data["Modified_Swing_Low"])
 
 
@@ -190,46 +189,46 @@ min123_SL =[] ##List to put the DATE of value of minimum LOW between last Swing 
 d = sorted(list(set(d))) ## Sorting the values and removing NAN using SORTED function from List of Last swing high before first swing low
 c = sorted(list(set(c))) ## Sorting the values and removing NAN using SORTED function from List of Last swing Low before first swing High
 del d[0]
-print(len(d))
-print(len(c))
+
 
 Valid_MSH_RSI_List = []
 Valid_RSI_MSH = None
 
 Exact_Swing_Low_Index = []
 Exact_Swing_Low = [] ##List to put the value of maximum HIGH between last Swing High and Last Swing Low
-Exact_Swing_low_Date =[] ##List to put the DATE of value of maximum HIGH between last Swing High and Last Swing Low
+Exact_Swing_Low_Date =[] ##List to put the DATE of value of maximum HIGH between last Swing High and Last Swing Low
 
 for i, element in enumerate(d):
     # min_index = None
     if d[0] > c[0]:
         if data["Low"][c[i]:d[i]].count() > 2:
-            Exact_Low_High_Individual_Index = data["Low"][c[i]:d[i]].idxmin() ## FInding Index of minimum LOW between last Swing High and Last Swing Low
-    else: 
-        Exact_Low_High_Individual_Index = data["Low"][d[i]:c[i]].idxmin() ## FInding Index of minimum LOW between last Swing High and Last Swing Low
+            Exact_Swing_Low_Individual_Index = data["Low"][c[i]:d[i]].idxmin() ## FInding Index of minimum LOW between last Swing High and Last Swing Low
+    else:
+        if data["Low"][c[i]:d[i]].count() > 2:
+            Exact_Swing_Low_Individual_Index = data["Low"][d[i]:c[i]].idxmin() ## FInding Index of minimum LOW between last Swing High and Last Swing Low
     
     # print(min_index)
-    Exact_Individual_Swing_Low  = data["Low"][Exact_Low_High_Individual_Index]
-    Exact_Swing_Low_Individual_Date = data["Datetime"][Exact_Low_High_Individual_Index]
-    Exact_Swing_Low_Index.append(Exact_Low_High_Individual_Index)
-    Valid_RSI_MSH = data["RSI"][Exact_Low_High_Individual_Index]
+    Exact_Individual_Swing_Low  = data["Low"][Exact_Swing_Low_Individual_Index]
+    Exact_Swing_Low_Individual_Date = data["Datetime"][Exact_Swing_Low_Individual_Index]
+    Exact_Swing_Low_Index.append(Exact_Swing_Low_Individual_Index)
+    Valid_RSI_MSH = data["RSI"][Exact_Swing_Low_Individual_Index]
     Valid_MSH_RSI_List.append(Valid_RSI_MSH)
-    Exact_Swing_low_Date.append(Exact_Swing_Low_Individual_Date)
+    Exact_Swing_Low_Date.append(Exact_Swing_Low_Individual_Date)
     Exact_Swing_Low .append(Exact_Individual_Swing_Low)
 
 ## putting data related with Exact Swing Low in PANDAS dataframe      
-t_SL = {
-    "t1": Exact_Swing_Low_Index,
-    "t2": Exact_Swing_low_Date,
-    "t3" : Exact_Swing_Low,
+Swing_Low_DF = {
+    "Exact_Swing_Low_Index": Exact_Swing_Low_Index,
+    "Exact_Swing_Low_Date": Exact_Swing_Low_Date,
+    "Exact_Swing_Low" : Exact_Swing_Low,
     "RSI" : Valid_MSH_RSI_List,
 }
-t_SL = pd.DataFrame(t_SL)
+Swing_Low_DF  = pd.DataFrame(Swing_Low_DF )
 
 ## Plotting Exact Swing Low
-for i in range(len(t_SL)):
-    fplt.add_text((t_SL.loc[i, "t2"], t_SL.loc[i, "t3"]), "Lo", color = "#bb7700")
-    # fplt.add_text((t_SL.loc[i, "RSI"], t_SL.loc[i, "t1"]), Valid_MSH_RSI_List[i], color = "#bb7700")
+# for i in range(len(Swing_Low_DF )):
+#     fplt.add_text((Swing_Low_DF .loc[i, "Exact_Swing_Low_Date"], Swing_Low_DF .loc[i, "Exact_Swing_Low"]), "Lo", color = "#bb7700")
+#     # fplt.add_text((t_SL.loc[i, "RSI"], t_SL.loc[i, "t1"]), Valid_MSH_RSI_List[i], color = "#bb7700")
 
 
 
@@ -245,13 +244,15 @@ for i in range(len(Exact_Swing_Low_Index)):
         Exact_Swing_High_Individual_Index = data["High"][Exact_Swing_Low_Index[i-1]:Exact_Swing_Low_Index[i]].idxmax() ## FInding Index of maximum HIGH between last Swing High and Last Swing Low
         Exact_Swing_Individual_High= data["High"][Exact_Swing_High_Individual_Index]
         Exact_Swing_High_Individual_Date = data["Datetime"][Exact_Swing_High_Individual_Index]
+        Exact_Swing_High_Index .append(Exact_Swing_High_Individual_Index)
         Exact_Swing_High_Date.append(Exact_Swing_High_Individual_Date)
         Exact_Swing_High.append(Exact_Swing_Individual_High)
 
 ## putting data related with Exact Swing Low in PANDAS dataframe      
 Swing_High_DF = {
-    "Exact_Swing_High": Exact_Swing_High,
+    "Exact_Swing_High_Index" : Exact_Swing_High_Index,
     "Exact_Swing_High_Date": Exact_Swing_High_Date,
+    "Exact_Swing_High": Exact_Swing_High,
 }
 Swing_High_DF = pd.DataFrame(Swing_High_DF)
 
@@ -260,13 +261,134 @@ for i in range(len(Swing_High_DF)):
     fplt.add_text((Swing_High_DF.loc[i, "Exact_Swing_High_Date"], Swing_High_DF.loc[i, "Exact_Swing_High"]), "Hi", color = "#bb7700")
 
 
+### Exact Swing Low
+Exact_Swing_Low_Index2 = []
+Exact_Swing_Low2 = [] ##List to put the value of maximum HIGH between last Swing High and Last Swing Low
+Exact_Swing_Low_Date2 =[] ##List to put the DATE of value of maximum HIGH between last Swing High and Last Swing Low
+
+for i in range(len(Exact_Swing_High_Index)):
+    # if d[0] > c[0]:
+    min_index = None
+    if data["Low"][Exact_Swing_High_Index[i-1]:Exact_Swing_High_Index[i]].count() > 2:
+        Exact_Swing_Low_Individual_Index2 = data["Low"][Exact_Swing_High_Index[i-1]:Exact_Swing_High_Index[i]].idxmin() ## FInding Index of maximum HIGH between last Swing High and Last Swing Low
+        Exact_Swing_Individual_Low2= data["Low"][Exact_Swing_Low_Individual_Index2]
+        Exact_Swing_Low_Individual_Date2 = data["Datetime"][Exact_Swing_Low_Individual_Index2]
+        Exact_Swing_Low_Index2.append(Exact_Swing_Low_Individual_Index2)
+        Exact_Swing_Low_Date2.append(Exact_Swing_Low_Individual_Date2)
+        Exact_Swing_Low2.append(Exact_Swing_Individual_Low2)
+
+## putting data related with Exact Swing Low in PANDAS dataframe      
+Swing_Low_DF2 = {
+    "Exact_Swing_Low_Index2" : Exact_Swing_Low_Index2,
+    "Exact_Swing_Low_Date2": Exact_Swing_Low_Date2,
+    "Exact_Swing_Low2": Exact_Swing_Low2,
+}
+Swing_Low_DF2 = pd.DataFrame(Swing_Low_DF2)
+
+## Plotting Exact Swing Low
+for i in range(len(Swing_Low_DF2)):
+    fplt.add_text((Swing_Low_DF2.loc[i, "Exact_Swing_Low_Date2"], Swing_Low_DF2.loc[i, "Exact_Swing_Low2"]), "Lo", color = "#bb7700")
+
+    # fplt.add_line((Swing_Low_DF2["Exact_Swing_Low_Date2"][i], Swing_Low_DF2["Exact_Swing_Low2"][i]),
+    # (Swing_High_DF["Exact_Swing_High_Date"][i], Swing_High_DF["Exact_Swing_High"][i]), color='#9900ff', interactive=False)
+
+a = Swing_High_DF.duplicated()
+print(len(Exact_Swing_Low_Date2))
+print(len(Exact_Swing_High_Date))
+
+x = {
+    "Exact_Swing_Low_Date2": Exact_Swing_Low_Date2,
+    "Exact_Swing_Low2": Exact_Swing_Low2,
+    "Exact_Swing_High_Date" : Exact_Swing_High_Date[1:],
+    "Exact_Swing_High": Exact_Swing_High[1:],
+}
+x = pd.DataFrame(x)
+# print(b)
+for i in range(len(x)):
+    fplt.add_line((x["Exact_Swing_Low_Date2"][i], x["Exact_Swing_Low2"][i]),
+    (x["Exact_Swing_High_Date"][i], x["Exact_Swing_High"][i]), color='#9900ff', interactive=False)
+
+## Plotting Exact Swing Lo}
+# print(Swing_High_DF[2:])
+# print(len(Swing_High_DF[:]))
+# print(len(Swing_Low_DF2[:]))
+
+##Plotting SWING LINES
+
+#     print(Swing_High_DF[Diff1:])
+#     print(len(Swing_High_DF[Diff1:]))
+# print(Diff1)
+# for i in range(len(Swing_High_DF)):
+#     # Diff1 = 0
+#     if len(Swing_High_DF["Exact_Swing_High_Date"]) > len(Swing_Low_DF["Exact_Swing_Low_Date"]):
+#         Diff1 = len(Swing_High_DF["Exact_Swing_High_Date"]) - len(Swing_Low_DF["Exact_Swing_Low_Date"])
+#         fplt.add_line((Swing_High_DF[Diff1:]["Exact_Swing_High_Date"][i], Swing_High_DF[Diff1:]["Exact_Swing_High"][i]),
+#         (Swing_Low_DF["Exact_Swing_Low_Date"][i], Swing_Low_DF["Exact_Swing_Low"][i]), color='#9900ff', interactive=False)
+
+
+# Diff2 = 0
+# if len(Swing_High_DF["Exact_Swing_High_Date"]) < len(Swing_Low_DF["Exact_Swing_Low_Date"]):
+#     Diff2 = len(Swing_Low_DF["Exact_Swing_Low_Date"]) - len(Swing_High_DF["Exact_Swing_High_Date"])
+# # for i, element in enumerate(Swing_High_DF):
+# print(len(Swing_High_DF))
+# # Swing_Low_DF = Swing_Low_DF.drop(labels=range(0, Diff2), axis=0).reset_index()
+# # print(len(Swing_High_DF))
+# # print(Swing_High_DF)
+# for i, element in enumerate(Swing_High_DF):
+#     pass
+# #     # print(i)
+# #     # print(Diff2)
+# print(len(Swing_High_DF[:]))
+# print(len(Swing_Low_DF[:]))
+# print(Swing_High_DF[:])
+# print(Swing_Low_DF[:])
+# for i in range(len(Swing_Low_DF)):
+#     # fplt.add_line((Swing_Low_DF[Diff2:]["Exact_Swing_Low_Date"][i], Swing_Low_DF[Diff2:]["Exact_Swing_Low"][i]),
+#     # (Swing_High_DF["Exact_Swing_High_Date"][i], Swing_High_DF["Exact_Swing_High"][i]), color='#9900ff', interactive=False)
+#     fplt.add_line((Swing_Low_DF.loc[i, "Exact_Swing_Low_Date"], Swing_Low_DF.loc[i, "Exact_Swing_Low"]),
+#     (Swing_High_DF.loc[i, "Exact_Swing_High_Date"], Swing_High_DF.loc[i, "Exact_Swing_High"]), color='#9900ff', interactive=False)
+
+# fplt.add_line((Swing_Low_DF.loc[0, "Exact_Swing_Low_Date"], Swing_Low_DF.loc[0, "Exact_Swing_Low"]),
+# (Swing_High_DF.loc[0, "Exact_Swing_High_Date"], Swing_High_DF.loc[0, "Exact_Swing_High"]), color='#9900ff', interactive=False)
+
+
+
+
+
+    # if Swing_High_DF["Exact_Swing_High_Date"][0] > Swing_Low_DF["Exact_Swing_Low_Date"][0]:
+        # fplt.add_line((Swing_High_DF["Exact_Swing_High_Date"][i], Swing_High_DF["Exact_Swing_High"][i]),
+        # (Swing_Low_DF[Diff2:]["Exact_Swing_Low_Date"][i], Swing_Low_DF[Diff2:]["Exact_Swing_Low"][i]), color='#9900ff', interactive=False)
+
+# else:
+#     for i, element in enumerate(Swing_High_DF):
+        # print(i)
+#     # if Swing_High_DF["Exact_Swing_High_Date"][0] > Swing_Low_DF["Exact_Swing_Low_Date"][0]:
+#         fplt.add_line((Swing_High_DF.loc[i, "Exact_Swing_High_Date"], Swing_High_DF.loc[i, "Exact_Swing_High"]),
+#         (Swing_Low_DF.loc[i, "Exact_Swing_Low_Date"], Swing_Low_DF.loc[i, "Exact_Swing_Low"]), color='#9900ff', interactive=False)
+
+
+#     Swing_Low_DF = Swing_Low_DF.drop(range(0, Diff1))
+# else:
+#     pass
+
+
+# print(len(Swing_High_DF["Exact_Swing_High_Date"]))
+# print(len(Swing_Low_DF["Exact_Swing_Low_Date"]))
+# print(Swing_High_DF["Exact_Swing_High_Date"][0])
+# print(Swing_Low_DF["Exact_Swing_Low_Date"][Diff1+1])
+
+
+# for i in range(len(Swing_Low_DF)):
+#     fplt.add_line((Swing_Low_DF.loc[i, "Exact_Swing_Low_Date"], Swing_Low_DF.loc[i, "Exact_Swing_Low"]),
+#     (Swing_High_DF.loc[i+1, "Exact_Swing_High_Date"], Swing_High_DF.loc[i+1, "Exact_Swing_High"]), color='#9900ff', interactive=False)
+
 
 
 ## Plotting candlestick and showing all the Plots
 fplt.candlestick_ochl(data[["Datetime","Open", "Close", "High", "Low"]])
 
-def get_name(Symbol):
-    return yf.Ticker(Symbol).info.get("shortName") or Symbol
+# def get_name(Symbol):
+#     return yf.Ticker(Symbol).info.get("shortName") or Symbol
 
 
 
@@ -309,4 +431,48 @@ fplt.show()
 # print(dividend)
 
 
-# "My psuh in this"
+
+# print(Shell_Swing_High_Index_List)
+# print(Exact_Swing_High_Index_List)
+# print(len(Exact_Swing_Low_Index_List))
+# print(len(Exact_Swing_High_Index_List))
+
+# ## Probable Swing High (Values that touches the upper bollinger band are the probable swing highs)
+# Probable_Swing_High_index_list = []
+# Probable_Swing_Low_index_list = []
+
+# for i in range(len(c)):
+#     d = data["BB_High"][:c[i]].last_valid_index()
+#     Probable_Swing_High_index_list.append(d)
+
+
+# for i in range(len(data["BB_Low"])):
+#     # There are probably None or NaN data in the Low of Bollinger Band, so to remove those values, np.last_valid_index() is used
+#     Probable_Swing_High_index = data["BB_Low"][:i].last_valid_index()
+    
+#     # Updating the Individual Probable swing high indexes
+#     Probable_Swing_High_index_list.append(Probable_Swing_High_index)
+
+#     # Removing the None values that appear in the Probable Swing High Indexes list
+#     while None in Probable_Swing_High_index_list:
+#         Probable_Swing_High_index_list.remove(None)
+
+# for i in range(len(data["BB_High"])):
+#     # There are probably None or NaN data in the Low of Bollinger Band, so to remove those values, np.last_valid_index() is used
+#     Probable_Swing_Low_index = data["BB_High"][:i].last_valid_index()
+    
+#     # Updating the Individual Probable swing high indexes
+#     Probable_Swing_Low_index_list.append(Probable_Swing_Low_index)
+
+#     # Removing the None values that appear in the Probable Swing High Indexes list
+#     while None in Probable_Swing_Low_index_list:
+#         Probable_Swing_Low_index_list.remove(None)
+
+# # The indexes are not in ascending order, so sorting them to ascending order
+# Probable_Swing_High_index_list = sorted(list(set(Probable_Swing_High_index_list)))
+
+# # The indexes are not in ascending order, so sorting them to ascending order
+# Probable_Swing_Low_index_list = sorted(list(set(Probable_Swing_Low_index_list)))
+
+# print(len(Probable_Swing_Low_index_list), len(Probable_Swing_High_index_list))
+# print(48 in range(44,49))

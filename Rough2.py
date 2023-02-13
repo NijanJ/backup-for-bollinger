@@ -98,10 +98,10 @@ print(data)
 
 # print(a)
 
-res.to_csv("any1")
-pd.set_option('display.max_rows', res.shape[0]+1)
-print(res)
-print(res["Modified_Swing_Low"])
+# res.to_csv("any1")
+# pd.set_option('display.max_rows', res.shape[0]+1)
+# print(res)
+# print(res["Modified_Swing_Low"])
 
 
 ## Fror exact Swing High
