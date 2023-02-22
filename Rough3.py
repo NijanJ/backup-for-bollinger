@@ -303,7 +303,7 @@ x = {
     "Exact_Swing_High": Exact_Swing_High[1:],
 }
 x = pd.DataFrame(x)
-# print(b)
+print(x)
 for i in range(len(x)):
     fplt.add_line((x["Exact_Swing_Low_Date2"][i], x["Exact_Swing_Low2"][i]),
     (x["Exact_Swing_High_Date"][i], x["Exact_Swing_High"][i]), color='#9900ff', interactive=False)
@@ -399,9 +399,9 @@ fplt.candlestick_ochl(data[["Datetime","Open", "Close", "High", "Low"]])
 # print(res["Modified_Swing_Low"])
 
 
-# fplt.show(qt_exec = False) # prepares plots when they're all setup
-# win.show()
-# app.exec()
+fplt.show(qt_exec = False) # prepares plots when they're all setup
+win.show()
+app.exec()
 fplt.show()
 
 # t_df.to_csv("any1")
@@ -417,62 +417,3 @@ fplt.show()
 
 
 
-## Downloading financial Data
-# data = yf.Ticker("AAPL")
-# Balance_Sheet = yf.get_balance_sheet("AAPL")
-# b = data.quarterly_balance_sheet
-# dividend = data.dividends
-# dividend.index = pd.MultiIndex.from_arrays([dividend.index.date,
-#     dividend.index.time], names=['Date','Time'])
-# dividend = pd.DataFrame(dividend)
-# dividend["Datetime"] = dividend.index
-# dividend["Date"] = dividend["Datetime"].dt.date
-# dividend["Time"] = dividend["Datetime"].dt.time
-# print(dividend)
-
-
-
-# print(Shell_Swing_High_Index_List)
-# print(Exact_Swing_High_Index_List)
-# print(len(Exact_Swing_Low_Index_List))
-# print(len(Exact_Swing_High_Index_List))
-
-# ## Probable Swing High (Values that touches the upper bollinger band are the probable swing highs)
-# Probable_Swing_High_index_list = []
-# Probable_Swing_Low_index_list = []
-
-# for i in range(len(c)):
-#     d = data["BB_High"][:c[i]].last_valid_index()
-#     Probable_Swing_High_index_list.append(d)
-
-
-# for i in range(len(data["BB_Low"])):
-#     # There are probably None or NaN data in the Low of Bollinger Band, so to remove those values, np.last_valid_index() is used
-#     Probable_Swing_High_index = data["BB_Low"][:i].last_valid_index()
-    
-#     # Updating the Individual Probable swing high indexes
-#     Probable_Swing_High_index_list.append(Probable_Swing_High_index)
-
-#     # Removing the None values that appear in the Probable Swing High Indexes list
-#     while None in Probable_Swing_High_index_list:
-#         Probable_Swing_High_index_list.remove(None)
-
-# for i in range(len(data["BB_High"])):
-#     # There are probably None or NaN data in the Low of Bollinger Band, so to remove those values, np.last_valid_index() is used
-#     Probable_Swing_Low_index = data["BB_High"][:i].last_valid_index()
-    
-#     # Updating the Individual Probable swing high indexes
-#     Probable_Swing_Low_index_list.append(Probable_Swing_Low_index)
-
-#     # Removing the None values that appear in the Probable Swing High Indexes list
-#     while None in Probable_Swing_Low_index_list:
-#         Probable_Swing_Low_index_list.remove(None)
-
-# # The indexes are not in ascending order, so sorting them to ascending order
-# Probable_Swing_High_index_list = sorted(list(set(Probable_Swing_High_index_list)))
-
-# # The indexes are not in ascending order, so sorting them to ascending order
-# Probable_Swing_Low_index_list = sorted(list(set(Probable_Swing_Low_index_list)))
-
-# print(len(Probable_Swing_Low_index_list), len(Probable_Swing_High_index_list))
-# print(48 in range(44,49))
