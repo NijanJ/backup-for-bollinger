@@ -7,30 +7,35 @@ import talib
 import math
 import requests
 import openpyxl
-
+# # If you need to get the column letter, also import this
+from openpyxl.utils import get_column_letter
 
 url = "https://financialmodelingprep.com/api/v3/cash-flow-statement/AAPL?apikey=e04ed607bd57315875138f579e484641&limit=120"
 response =requests.get(url)
-Cashflow = response.json()
-Cashflow = pd.DataFrame(Cashflow)
+AAPL_Cashflow = response.json()
+
+#Converting Json file to pandas dataframe
+AAPL_Cashflow = pd.DataFrame(AAPL_Cashflow)
+# print(AAPL_Cashflow["symbol"])
+# AAPL_Cashflow = AAPL_Cashflow.drop(["symbol", "cik"], axis = 1)
+print(AAPL_Cashflow)
+
+
+
+
+#Converting pandas dataframe to excel file
+AAPL_Cashflow_Excel = AAPL_Cashflow.to_excel("AAPL_Cashflow_Excel.xlsx")
 # print(response.json())
 
 # for obj in Cashflow:
 #     print(obj["date"][0])
-print(Cashflow[["date", "freeCashFlow"]])
+# print(Cashflow[["date", "freeCashFlow"]])
 # print(Cashflow)
 
 
 
 
 
-
-
-
-
-
-# # If you need to get the column letter, also import this
-# from openpyxl.utils import get_column_letter
 
 # janTrading/AAPL-Balance_Sheet.xlsx")
 # print(wb)

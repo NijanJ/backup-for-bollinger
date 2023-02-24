@@ -42,8 +42,10 @@ data["RSI"] = talib.RSI(data["Close"],14).round(2)
 # fplt.plot(data["RSI"], color='#927', legend="RSI", ax = ax1)
 
 ## MACD Calculation 
-data["MACD"] = talib.MACD(data["Close"], fastperiod=12, slowperiod=26, signalperiod=9)[0]
-fplt.plot(data["MACD"], color='#927', legend="MACD", ax = ax2)
+data["MACD"],data["Signal"],data["macd_diff"] = talib.MACD(data["Close"], fastperiod=12, slowperiod=26, signalperiod=9)
+# fplt.volume_ocv(data[['Datetime','Open','Close','macd_diff']], ax=ax2, colorfunc=fplt.strength_colorfilter)
+fplt.plot(data["MACD"], ax=ax2, legend='MACD')
+fplt.plot(data["Signal"], ax=ax2, legend='Signal')
 
 ## Bollinger Band formula
 def get_sma(prices, rate):
@@ -120,6 +122,9 @@ Exact_Swing_High_Date_List = []
 Exact_Swing_High_List =[]
 Exact_Swing_High_Volume_List = []
 Exact_Swing_High_RSI_List = []
+Exact_Swing_High_MACD_List = []
+Exact_Swing_High_Signal_List = []
+
 for i in range(len(Shell_Swing_Low_Index_List)):
     if data["High"][Shell_Swing_Low_Index_List[i-1]:Shell_Swing_Low_Index_List[i]].count() > 2:
         Exact_Swing_High_Index = data["High"][Shell_Swing_Low_Index_List[i-1]:Shell_Swing_Low_Index_List[i]].idxmax()
@@ -127,16 +132,21 @@ for i in range(len(Shell_Swing_Low_Index_List)):
         Exact_Swing_High = data["High"][Exact_Swing_High_Index]
         Exact_Swing_High_Volume = data["Volume"][Exact_Swing_High_Index]
         Exact_Swing_High_RSI = data["RSI"][Exact_Swing_High_Index]
+        Exact_Swing_High_MACD = data["MACD"][Exact_Swing_High_Index]
+        Exact_Swing_High_Signal = data["Signal"][Exact_Swing_High_Index]
         Exact_Swing_High_Index_List.append(Exact_Swing_High_Index)
         Exact_Swing_High_Date_List.append(Exact_Swing_High_Date)
         Exact_Swing_High_Volume_List.append(Exact_Swing_High_Volume) 
         Exact_Swing_High_List.append(Exact_Swing_High) 
         Exact_Swing_High_RSI_List.append(Exact_Swing_High_RSI) 
+        Exact_Swing_High_MACD_List.append(Exact_Swing_High_MACD)
+        Exact_Swing_High_Signal_List.append(Exact_Swing_High_Signal)
 
 
 ## Storing all the Swing High Related Datas in one variable
 Exact_Swing_High_Variables = [Exact_Swing_High_Index_List, Exact_Swing_High_Date_List, Exact_Swing_High_List, 
-                            Exact_Swing_High_Volume_List, Exact_Swing_High_RSI_List ]
+                            Exact_Swing_High_Volume_List, Exact_Swing_High_RSI_List, Exact_Swing_High_MACD_List,
+                            Exact_Swing_High_Signal_List ]
 
 
 # Making dataframe of the LISTS related with Swing Highs of same sizes, A PANDAS DATAFRAME
@@ -145,6 +155,8 @@ Exact_Swing_High_Df = {"Exact_Swing_High_Index_List" : Exact_Swing_High_Variable
                         "Exact_Swing_High_List" : Exact_Swing_High_Variables[2],
                         "Exact_Swing_High_Volume_List" : Exact_Swing_High_Variables[3],
                         "Exact_Swing_High_RSI_List" : Exact_Swing_High_Variables[4],
+                        "Exact_Swing_High_MACD_List" : Exact_Swing_High_Variables[5],
+                        "Exact_Swing_High_Signal_List" : Exact_Swing_High_Variables[6],
                         } 
 
 Exact_Swing_High_Df = pd.DataFrame(Exact_Swing_High_Df).drop_duplicates()
@@ -174,6 +186,8 @@ Exact_Swing_Low_Date_List = []
 Exact_Swing_Low_List =[]
 Exact_Swing_Low_Volume_List = []
 Exact_Swing_Low_RSI_List = []
+Exact_Swing_Low_MACD_List = []
+Exact_Swing_Low_Signal_List = []
 
 for i in range(len(Exact_Swing_High_Index_List)):
     if data["Low"][Exact_Swing_High_Index_List[i-1]:Exact_Swing_High_Index_List[i]].count() > 2 :
@@ -182,16 +196,21 @@ for i in range(len(Exact_Swing_High_Index_List)):
         Exact_Swing_Low = data["Low"][Exact_Swing_Low_Index]
         Exact_Swing_Low_Volume = data["Volume"][Exact_Swing_Low_Index]
         Exact_Swing_Low_RSI = data["RSI"][Exact_Swing_Low_Index]
+        Exact_Swing_Low_MACD = data["MACD"][Exact_Swing_Low_Index]
+        Exact_Swing_Low_Signal = data["Signal"][Exact_Swing_Low_Index]
         Exact_Swing_Low_Index_List.append(Exact_Swing_Low_Index)
         Exact_Swing_Low_Date_List.append(Exact_Swing_Low_Date)
         Exact_Swing_Low_Volume_List.append(Exact_Swing_Low_Volume) 
         Exact_Swing_Low_List.append(Exact_Swing_Low) 
-        Exact_Swing_Low_RSI_List.append(Exact_Swing_Low_RSI) 
+        Exact_Swing_Low_RSI_List.append(Exact_Swing_Low_RSI)
+        Exact_Swing_Low_MACD_List.append(Exact_Swing_Low_MACD) 
+        Exact_Swing_Low_Signal_List.append(Exact_Swing_Low_Signal) 
 
 
 ## Storing all the Swing High Related Datas in one variable
 Exact_Swing_Low_Variables = [Exact_Swing_Low_Index_List, Exact_Swing_Low_Date_List, Exact_Swing_Low_List, 
-                            Exact_Swing_Low_Volume_List, Exact_Swing_Low_RSI_List]
+                            Exact_Swing_Low_Volume_List, Exact_Swing_Low_RSI_List, Exact_Swing_Low_MACD_List,
+                            Exact_Swing_Low_Signal_List]
 
 
 
@@ -202,6 +221,8 @@ Exact_Swing_Low_Df = {
     "Exact_Swing_Low_List" : Exact_Swing_Low_Variables[2],
     "Exact_Swing_Low_Volume_List" : Exact_Swing_Low_Variables[3],
     "Exact_Swing_Low_RSI_List" : Exact_Swing_Low_Variables[4],
+    "Exact_Swing_Low_MACD_List" : Exact_Swing_Low_Variables[5],
+    "Exact_Swing_Low_Signal_List" : Exact_Swing_Low_Variables[6]
 } 
 
 Exact_Swing_Low_Df = pd.DataFrame(Exact_Swing_Low_Df).drop_duplicates()
@@ -278,10 +299,14 @@ Ord_Volume_Exact_Swing_High_Index_List = Ord_Volume_Exact_Swing_High_Df["Exact_S
 Ord_Volume_Exact_Swing_High_Date = Ord_Volume_Exact_Swing_High_Df["Exact_Swing_High_Date_List"].tolist()
 Ord_Volume_Exact_Swing_High_List = Ord_Volume_Exact_Swing_High_Df["Exact_Swing_High_List"].tolist()
 Ord_Volume_Exact_Swing_High_Volume_List = Ord_Volume_Exact_Swing_High_Df["Exact_Swing_High_Volume_List"].tolist()
+Ord_Volume_Exact_Swing_High_MACD_List = Ord_Volume_Exact_Swing_High_Df["Exact_Swing_High_MACD_List"].tolist()
+Ord_Volume_Exact_Swing_High_Signal_List = Ord_Volume_Exact_Swing_High_Df["Exact_Swing_High_Signal_List"].tolist()
 Ord_Volume_Exact_Swing_Low_Index_List = Ord_Volume_Exact_Swing_Low_Df["Exact_Swing_Low_Index_List"].tolist()
 Ord_Volume_Exact_Swing_Low_Date_List = Ord_Volume_Exact_Swing_Low_Df["Exact_Swing_Low_Date_List"].tolist()
 Ord_Volume_Exact_Swing_Low_List = Ord_Volume_Exact_Swing_Low_Df["Exact_Swing_Low_List"].tolist()
 Ord_Volume_Exact_Swing_Low_Volume_List = Ord_Volume_Exact_Swing_Low_Df["Exact_Swing_Low_Volume_List"].tolist()
+Ord_Volume_Exact_Swing_Low_MACD_List = Ord_Volume_Exact_Swing_Low_Df["Exact_Swing_Low_MACD_List"].tolist()
+Ord_Volume_Exact_Swing_Low_Signal_List = Ord_Volume_Exact_Swing_Low_Df["Exact_Swing_Low_Signal_List"].tolist()
 
 #ii. Creating dictionary of lists to convert into dataframe
 Ord_Volume_Df = {
@@ -289,11 +314,14 @@ Ord_Volume_Df = {
     "Ord_Swing_Low_Date": Ord_Volume_Exact_Swing_Low_Date_List,
     "Ord_Swing_Low" : Ord_Volume_Exact_Swing_Low_List,
     "Ord_Swing_Low_Volume" : Ord_Volume_Exact_Swing_Low_Volume_List,
+    "Ord_Swing_Low_MACD" : Ord_Volume_Exact_Swing_Low_MACD_List,
+    "Ord_Swing_Low_Signal" : Ord_Volume_Exact_Swing_Low_Signal_List,
     "Ord_Swing_High_Index" : Ord_Volume_Exact_Swing_High_Index_List, 
     "Ord_Swing_High_Date" : Ord_Volume_Exact_Swing_High_Date,
     "Ord_Swing_High" : Ord_Volume_Exact_Swing_High_List,
-    "Ord_Swing_High_Volume" : Ord_Volume_Exact_Swing_High_Volume_List
-
+    "Ord_Swing_High_Volume" : Ord_Volume_Exact_Swing_High_Volume_List,
+    "Ord_Swing_High_MACD" : Ord_Volume_Exact_Swing_High_MACD_List,
+    "Ord_Swing_High_Signal" : Ord_Volume_Exact_Swing_High_Signal_List,
 }
 
 ##iii. Create Dataframe
@@ -347,6 +375,9 @@ print(Ord_Volume_Downswing_String_List)
       #iv. plotting ord line from swing high to swing low
 
 #i. For this we need to create candlestick chart in another pane again.
+fplt.candle_bull_color = fplt.candle_bear_color = fplt.candle_bear_body_color = '#e6e6e6'
+# fplt.volume_bull_color = fplt.volume_bear_color = '#333'
+fplt.candle_bull_body_color = fplt.volume_bull_body_color = '#e6e6e6'
 fplt.candlestick_ochl(data[["Datetime","Open", "Close", "High", "Low"]], ax = ax1)
 
  #ii. Plotting Ord volume of upswing in secondary candlestick chart.
@@ -360,13 +391,13 @@ for i in range(len(Ord_Volume_Downswing_String_List)):
 #iii. plotting ord line from swing low to swing high
 for i in range(len(Ord_Volume_Df)):
     fplt.add_line((Ord_Volume_Df.loc[i, "Ord_Swing_Low_Date"], Ord_Volume_Df.loc[i,"Ord_Swing_Low"]),
-    (Ord_Volume_Df.loc[i,"Ord_Swing_High_Date"], Ord_Volume_Df.loc[i,"Ord_Swing_High"]), color='#927', interactive=False, ax = ax1)
+    (Ord_Volume_Df.loc[i,"Ord_Swing_High_Date"], Ord_Volume_Df.loc[i,"Ord_Swing_High"]), color='#000', interactive=False, ax = ax1)
 
 #iv. plotting ord line from swing high to swing low
 for i in range(len(Ord_Volume_Df)):
     if i < Minimum_Row-1:
         fplt.add_line((Ord_Volume_Df.loc[i, "Ord_Swing_High_Date"], Ord_Volume_Df.loc[i,"Ord_Swing_High"]),
-        (Ord_Volume_Df.loc[i+1,"Ord_Swing_Low_Date"], Ord_Volume_Df.loc[i+1,"Ord_Swing_Low"]), color='#9900ff', style='hfukfkuyg', interactive=False, ax = ax1)
+        (Ord_Volume_Df.loc[i+1,"Ord_Swing_Low_Date"], Ord_Volume_Df.loc[i+1,"Ord_Swing_Low"]), color='#000', style='hfukfkuyg', interactive=False, ax = ax1)
 
 
 
@@ -381,7 +412,7 @@ for i in range(len(Ord_Volume_Upswing_List)):
     try:
         if Ord_Volume_Upswing_List[i+1] and Ord_Volume_Downswing_List[i+1] is not None:
             if Ord_Volume_Upswing_List[i+1] < Ord_Volume_Downswing_List[i+1] and Ord_Volume_Df["Ord_Swing_High"][i+1] > Ord_Volume_Df["Ord_Swing_High"][i] :
-                fplt.add_text((Ord_Volume_Df.loc[i+1, "Ord_Swing_High_Date"], Ord_Volume_Df.loc[i+1, "Ord_Swing_High"]*1.02), "Short-Sell" , color = "#bb7700", ax=ax1)
+                fplt.add_text((Ord_Volume_Df.loc[i+1, "Ord_Swing_High_Date"], Ord_Volume_Df.loc[i+1, "Ord_Swing_High"]*1.02), "Short-Sell" , color = "#eb719e", ax=ax1)
     except IndexError as e:
         print(e)
 
@@ -390,7 +421,7 @@ for i in range(len(Ord_Volume_Upswing_List)):
     try:
         if Ord_Volume_Upswing_List[i+1] and Ord_Volume_Downswing_List[i+1] is not None:
             if Ord_Volume_Upswing_List[i+1] > Ord_Volume_Downswing_List[i+1] and Ord_Volume_Df["Ord_Swing_Low"][i+1] < Ord_Volume_Df["Ord_Swing_Low"][i] :
-                fplt.add_text((Ord_Volume_Df.loc[i+1, "Ord_Swing_Low_Date"], Ord_Volume_Df.loc[i+1, "Ord_Swing_Low"]*1.02), "Buy" , color = "#bb7700", ax=ax1)
+                fplt.add_text((Ord_Volume_Df.loc[i+1, "Ord_Swing_Low_Date"], Ord_Volume_Df.loc[i+1, "Ord_Swing_Low"]*1.02), "Buy" , color = "#5abeb0", ax=ax1)
     except IndexError as e:
         print(e)
         
@@ -399,19 +430,28 @@ for i in range(len(Ord_Volume_Upswing_List)):
 ##2. Comparing ord volume of downswing and upswing when price is making higher high and lower low
 #2.(i) TOPPING PATTERN(Comparing two upswing volume, to know wether stock still have enough energy(volume) to move above. IF volume is low in current Up-leg than previous
 #upleg, stock has become weak and we can sell.
+#Bearish MACD Crossover
+def Bearish_MACD_Crossover():
+    for i in range(len(Ord_Volume_Df)):
+        if Ord_Volume_Df["Ord_Swing_Low_MACD"][i] > Ord_Volume_Df["Ord_Swing_Low_Signal"][i] and Ord_Volume_Df["Ord_Swing_Low_MACD"][i+1] < Ord_Volume_Df["Ord_Swing_Low_Signal"][i+1]:
+            return Ord_Volume_Df["Ord_Swing_Low_MACD"][i] > Ord_Volume_Df["Ord_Swing_Low_Signal"][i] and Ord_Volume_Df["Ord_Swing_Low_MACD"][i+1] < Ord_Volume_Df["Ord_Swing_Low_Signal"][i+1]
 
 for i in range(len(Ord_Volume_Upswing_List)):
     try:
         if Ord_Volume_Upswing_List[i+1] is not None:
-            if Ord_Volume_Upswing_List[i+1] < Ord_Volume_Upswing_List[i] and Ord_Volume_Df["Ord_Swing_High"][i+1] > Ord_Volume_Df["Ord_Swing_High"][i] and Ord_Volume_Df["Ord_Swing_Low"][i+1] > Ord_Volume_Df["Ord_Swing_Low"][i] :
-                fplt.add_text((Ord_Volume_Df.loc[i+1, "Ord_Swing_High_Date"], Ord_Volume_Df.loc[i+1, "Ord_Swing_High"]*1.02), "Short-Sell in uptrend" , color = "#bb7700", ax=ax1)
+            if Ord_Volume_Upswing_List[i+1] < Ord_Volume_Upswing_List[i] and Ord_Volume_Df["Ord_Swing_High"][i+1] > Ord_Volume_Df["Ord_Swing_High"][i] and Ord_Volume_Df["Ord_Swing_Low"][i+1] > Ord_Volume_Df["Ord_Swing_Low"][i] and Bearish_MACD_Crossover:
+                fplt.add_text((Ord_Volume_Df.loc[i+1, "Ord_Swing_High_Date"], Ord_Volume_Df.loc[i+1, "Ord_Swing_High"]*0.998), "Short-Sell in uptrend" , color = "#eb719e", ax=ax1)
     except IndexError as e:
         print(e)
 
 
 
-fplt.candlestick_ochl(data[["Datetime","Open", "Close", "High", "Low"]])
 
+# # change to b/w coloring templates for next plots
+fplt.candle_bull_color = fplt.candle_bear_color = fplt.candle_bear_body_color = '#000'
+# fplt.volume_bull_color = fplt.volume_bear_color = '#333'
+fplt.candle_bull_body_color = fplt.volume_bull_body_color = '#fff'
+fplt.candlestick_ochl(data[["Datetime","Open", "Close", "High", "Low"]])
 fplt.show()
 
 
