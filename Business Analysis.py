@@ -6,14 +6,19 @@ import datetime
 import talib
 import math
 import requests
+import openpyxl
 
 
 url = "https://financialmodelingprep.com/api/v3/cash-flow-statement/AAPL?apikey=e04ed607bd57315875138f579e484641&limit=120"
 response =requests.get(url)
-
+Cashflow = response.json()
+Cashflow = pd.DataFrame(Cashflow)
 # print(response.json())
-for obj in response.json():
-    print(obj["date"][0])
+
+# for obj in Cashflow:
+#     print(obj["date"][0])
+print(Cashflow[["date", "freeCashFlow"]])
+# print(Cashflow)
 
 
 
