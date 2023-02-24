@@ -452,7 +452,7 @@ fplt.candle_bull_color = fplt.candle_bear_color = fplt.candle_bear_body_color = 
 # fplt.volume_bull_color = fplt.volume_bear_color = '#333'
 fplt.candle_bull_body_color = fplt.volume_bull_body_color = '#fff'
 fplt.candlestick_ochl(data[["Datetime","Open", "Close", "High", "Low"]])
-fplt.show()
+# fplt.show()
 
 
 
