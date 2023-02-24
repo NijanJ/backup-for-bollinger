@@ -1,74 +1,57 @@
-from tvDatafeed import TvDatafeed, Interval
-import talib as ta
+import finplot as fplt
 import pandas as pd
-# pd.set_option('display.max_rows', 1000)
+import time
+import random
 import numpy as np
-import datetime
-from datetime import time
-import matplotlib as plt
-from matplotlib.lines import Line2D
-import mplfinance as mpf
-from yahoo_fin.stock_info import *
-from nsepy import get_history
-import yfinance as yf
 
 
+import finplot as fplt
+import pandas as pd
+import random
 
-tv = TvDatafeed()
+# create an empty DataFrame to hold the live data
+data = pd.DataFrame(columns=['time', 'price'])
 
-#Download data from stock market
-stock_data = yf.download("AAPL", start="2023-01-01", end="2023-01-17",interval= "15m")
+# create a finplot figure
+fig = fplt.create_plot()
 
-data = tv.get_hist(
-    symbol='NIFTY',exchange='NSE',interval=Interval.in_15_minute,n_bars=5000, fut_contract = 1
-)
+# create a line plot for the price data
+fplt.plot(data['time'], data['price'], color='#0080ff')
+fplt.legend('Price')
 
+# add a simple moving average indicator
+sma_period = 10
+sma = data['price'].rolling(sma_period).mean()
+sma_plot = fplt.add_line(data['time'], sma, color='#ff8000', label=f'SMA ({sma_period})')
 
-# data.to_dict()
-print(data)
+# define a function to generate random data
+def generate_data():
+    while True:
+        yield pd.DataFrame({
+            'time': pd.Timestamp.now(),
+            'price': random.uniform(90, 110)
+        }, index=[0])
 
-# # Select data for a specific time period
-# start_date = "2023-01-09"
-# end_date = "2023-01-13"
-# start_time = "09:30:00"
-# end_time = "09:45:00"
+# create a generator for the data
+data_gen = generate_data()
 
-# selected_data = data["high"].between_time(start_time, end_time).loc[start_date:end_date]
-# print(selected_data)
+# define a function to update the plot
+def update_plot():
+    # get the latest data point
+    new_data = next(data_gen)
+    
+    # append it to the DataFrame
+    data.loc[len(data)] = new_data.loc[0]
+    
+    # update the price plot
+    price_plot.update(data['time'], data['price'])
+    
+    # update the SMA plot
+    sma = data['price'].rolling(sma_period).mean()
+    sma_plot.update(data['time'], sma)
 
-# high_low_data = pd.DataFrame({'high': data.iloc[:1]['high'], 'low': data.iloc[:1]['low']})
-# print(data)
-# high_low_data = pd.DataFrame({'High': stock_data.iloc[:1].Open, 'Low': stock_data.iloc[:1].Open})
+# schedule the update function to be called every 1 second
+fplt.timer_callback(update_plot, 1.0)
 
-# # Plot the candle chart
-# mpf.plot(stock_data, type='candle', addplot=high_low_data)
-
-
-# Plot the candle chart
-# mpf.plot(data, type='candle', addplot = selected_data)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# b = (a.to_dict())
-# for data in b["high"]:
-#     print(data)
-# # Moving Average
-# a[1] = ta.EMA(a['close'], timeperiod = 20)
-# a['EMA10'] = ta.EMA(a['close'], timeperiod = 40)
-# print(a)
-# print(a.to_json())
-# c = a.to_dict()
-
+# show the plot
+fplt.show()
